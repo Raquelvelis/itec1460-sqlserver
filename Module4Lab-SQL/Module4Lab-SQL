@@ -1,15 +1,15 @@
 SELECT 
-  C.CompanyName, O.OrderDate 
+    C.CompanyName, O.OrderDate 
 FROM 
-  Customers 
+    Customers 
 AS 
-  c 
+    c 
 JOIN 
-  Orders 
+    Orders 
 AS 
-  o 
+    o 
 ON 
-  c.CustomerID = o.CustomerID;
+    c.CustomerID = o.CustomerID;
   
 
 SELECT 
@@ -26,66 +26,201 @@ ON
 
 
 SELECT 
-  OrderID, ROUND( /* Format to 2 decimal places */ 
+    OrderID, ROUND( /* Format to 2 decimal places */ 
   SUM( /* Add up all line items */ UnitPrice * Quantity * /* Basic line item total */ (1 - Discount) /* Apply any discount */ ), 2 ) 
 AS 
-  TotalValue, COUNT(*) 
+    TotalValue, COUNT(*) 
 AS 
-  NumberOfItems /* Count items in order */ 
+    NumberOfItems /* Count items in order */ 
 FROM 
-  [Order Details] 
+    [Order Details] 
 GROUP BY 
-  OrderID /* Calculate per order */ 
+    OrderID /* Calculate per order */ 
 ORDER BY 
-  TotalValue 
+    TotalValue 
 DESC; /* Show highest value first */   
 
 
 SELECT 
-  p.ProductID, p.ProductName, COUNT(od.OrderID) AS TimesOrdered
+    p.ProductID, -- Select the product ID from Products table
+    p.ProductName, -- Select the product name from Products table
+    COUNT(od.OrderID) AS TimesOrdered -- Count how many times each product appears in orders
+                                      -- and alias it as 'TimesOrdered'
+
 FROM 
-  Products p
+    Products p -- Start from Products table, alias it as 'p'
 INNER JOIN 
-  [Order Details] od ON p.ProductID = od.ProductID
+    [Order Details] od -- Join with Order Details table, alias as 'od'
+     ON p.ProductID = od.ProductID -- Join condition: match product IDs
 GROUP BY 
-  p.ProductID, p.ProductName
+    p.ProductID, p.ProductName -- Group results by product ID and name  
+                              -- This is needed because we're using COUNT
 HAVING 
-  COUNT(od.OrderID) > 10
+    COUNT(od.OrderID) > 10 -- Only show products ordered more than 10 times
+                          -- HAVING is used instead of WHERE because it's filtering
+                          -- an aggregated value (COUNT)
 ORDER BY 
-  TimesOrdered DESC;
+    TimesOrdered DESC;  -- Sort by number of times ordered, highest to lowest
 
 
 SELECT 
-  ProductName, UnitPrice
+    ProductName, -- Select product name
+    UnitPrice  -- Select unit price
 FROM 
-  Products
+    Products
 WHERE 
-  UnitPrice > (
+    UnitPrice > ( -- Filter: only show products with price higher than...
+
+     -- Step 2: Subquery to calculate average price
 SELECT 
-  AVG(UnitPrice)
+    AVG(UnitPrice) -- Calculate the average price of all products
 FROM 
-  Products
+    Products
 )
 ORDER BY 
-  UnitPrice;
+    UnitPrice;  -- Sort by price, lowest to highest
 
-
+-- Step 1: Get top 5 customers
 SELECT TOP 5
-  c.CustomerID,
-  c.CompanyName,
-  ROUND(SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)), 2) AS TotalPurchase
-FROM 
-  Customers c
-INNER JOIN 
-  Orders o 
-ON 
-  c.CustomerID = o.CustomerID
-INNER JOIN 
-  [Order Details] od ON o.OrderID = od.OrderID
-WHERE 
-  YEAR(o.OrderDate) = 1997
-GROUP BY 
-  c.CustomerID, c.CompanyName
-ORDER BY 
-  TotalPurchase DESC;
+    c.CustomerID, -- Select customer ID
+    c.CompanyName, -- Select company name
+    ROUND(SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)), 2) AS TotalPurchase
+    -- Calculate total purchase
+    -- Round to 2 decimal places
 
+    -- Step 2: Start with Customers table
+FROM 
+    Customers c
+
+    -- Step 3: Join with Orders
+INNER JOIN 
+    Orders o 
+ON 
+    c.CustomerID = o.CustomerID  -- Match customers with their orders
+
+    -- Step 4: Join with Order Details
+INNER JOIN 
+    [Order Details] od 
+ON o.OrderID = od.OrderID  -- Match orders with their details
+
+-- Step 5: Filter for year 1997
+WHERE 
+    YEAR(o.OrderDate) = 1997
+
+-- Step 6: Group by customer
+GROUP BY 
+    c.CustomerID, c.CompanyName
+
+    -- Step 7: Sort by total purchase amount
+ORDER BY 
+    TotalPurchase DESC; -- Highest spending customers first
+
+
+--Query 1 - Average Order Value per USA Customer:
+
+-- Step 1: Select customer info and calculate average order value
+SELECT 
+    [c].[CustomerID], -- Get customer ID
+    [c].[CompanyName],  -- Get company name
+    ROUND(
+      AVG([od].[UnitPrice] * [od].[Quantity] * (1 - [od].[Discount])), -- Calculate average order amount
+      2) 
+      AS [AverageOrderValue]
+      -- Step 2: Join necessary tables
+FROM 
+    [dbo].[Orders] [o] -- Start with Orders
+    INNER JOIN [dbo].[Order Details] [od] -- Join with Order Details
+      ON [o].[OrderID] = [od].[OrderID]
+    INNER JOIN [dbo].[Customers] [c]  -- Join with Customers
+      ON [o].[CustomerID] = [c].[CustomerID]
+
+ -- Step 3: Filter USA customers only     
+WHERE 
+    [c].[Country] = 'USA'
+    -- Step 4: Group by customer
+GROUP BY 
+    [c].[CustomerID],
+    [c].[CompanyName]
+    -- Step 5: Sort by average order value
+ORDER BY 
+    [AverageOrderValue] DESC;
+
+-- Step 1: Create CTE (Common Table Expression) for product revenue
+    WITH [ProductRevenue] AS (
+    SELECT 
+        [p].[CategoryID],
+        [p].[ProductID],
+        [p].[ProductName],
+        ROUND(
+          SUM([od].[UnitPrice] * [od].[Quantity] * (1 - [od].[Discount])),  -- Calculate total revenue
+          2
+          ) AS [Revenue],
+        ROW_NUMBER() OVER ( -- Assign ranking within each category
+          PARTITION BY [p].[CategoryID]  -- Divide by category
+          ORDER BY SUM([od].[UnitPrice] * [od].[Quantity] * (1 - [od].[Discount])) DESC
+          ) AS [Rank]
+    FROM 
+        [dbo].[Products] [p]
+        INNER JOIN [dbo].[Order Details] [od] ON [p].[ProductID] = [od].[ProductID]
+    GROUP BY 
+        [p].[CategoryID],
+        [p].[ProductID],
+        [p].[ProductName]
+)
+
+-- Step 2: Select from CTE
+SELECT 
+    [c].[CategoryName],
+    [pr].[ProductName],
+    [pr].[Revenue]
+FROM 
+    [ProductRevenue] [pr]
+    INNER JOIN [dbo].[Categories] [c] ON [pr].[CategoryID] = [c].[CategoryID]
+WHERE 
+    [pr].[Rank] <= 3 -- Get only top 3 per category
+ORDER BY 
+    [c].[CategoryName],
+    [pr].[Revenue] DESC;
+
+--Query 3 - Monthly Sales for 1998:
+
+    SELECT 
+    MONTH([o].[OrderDate]) AS [Month],  -- Get month number
+    DATENAME(MONTH, [o].[OrderDate]) AS [MonthName], -- Get month name
+    ROUND(
+      SUM([od].[UnitPrice] * [od].[Quantity] * (1 - [od].[Discount])), -- Calculate total sales
+      2
+      ) AS [TotalSales]
+FROM 
+    [dbo].[Orders] [o]
+    INNER JOIN [dbo].[Order Details] [od] 
+      ON [o].[OrderID] = [od].[OrderID]
+WHERE 
+    YEAR([o].[OrderDate]) = 1998
+GROUP BY 
+    MONTH([o].[OrderDate]),
+    DATENAME(MONTH, [o].[OrderDate])
+ORDER BY 
+    [Month];
+
+  --Top 10 Customers by Revenue in 1997:
+
+
+    SELECT TOP 10 
+    [o].[CustomerID],
+    FORMAT -- Format as currency
+    (
+      SUM([od].[UnitPrice] * [od].[Quantity] * (1 - [od].[Discount])), 
+      'C2'
+      ) AS [TotalRevenue],
+    COUNT(DISTINCT [o].[OrderID]) AS [TotalOrders] -- Count unique orders
+FROM 
+    [dbo].[Orders] [o]
+    INNER JOIN [dbo].[Order Details] [od] 
+      ON [o].[OrderID] = [od].[OrderID]
+WHERE 
+    YEAR([o].[OrderDate]) = 1997 -- Filter for 1997 only
+GROUP BY 
+    [o].[CustomerID]
+ORDER BY 
+    SUM([od].[UnitPrice] * [od].[Quantity] * (1 - [od].[Discount])) DESC;

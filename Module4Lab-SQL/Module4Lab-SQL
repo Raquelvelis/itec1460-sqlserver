@@ -206,21 +206,21 @@ ORDER BY
   --Top 10 Customers by Revenue in 1997:
 
 
-    SELECT TOP 10 
-    [o].[CustomerID],
-    FORMAT -- Format as currency
-    (
-      SUM([od].[UnitPrice] * [od].[Quantity] * (1 - [od].[Discount])), 
-      'C2'
-      ) AS [TotalRevenue],
-    COUNT(DISTINCT [o].[OrderID]) AS [TotalOrders] -- Count unique orders
+    SELECT TOP 10                                       -- Limit results to top 10 customers
+   o.CustomerID,                                        -- Get customer ID from Orders table
+   c.CompanyName,                                       -- Get company name from Customers table
+   ROUND(SUM(od.UnitPrice * od.Quantity * 
+             (1-od.Discount)), 2) AS TotalRevenue,      -- Calculate total revenue with discounts applied
+                                                        -- and round to 2 decimal places
+   COUNT(DISTINCT o.OrderID) AS OrderCount              -- Count unique orders to avoid duplicates
 FROM 
-    [dbo].[Orders] [o]
-    INNER JOIN [dbo].[Order Details] [od] 
-      ON [o].[OrderID] = [od].[OrderID]
+   Orders o                                             -- Start with Orders table (aliased as 'o')
+   JOIN OrderDetails od ON o.OrderID = od.OrderID       -- Connect to order line items to get quantities and prices
+   JOIN Customers c ON o.CustomerID = c.CustomerID      -- Connect to Customers to get company names
 WHERE 
-    YEAR([o].[OrderDate]) = 1997 -- Filter for 1997 only
+   YEAR(o.OrderDate) = 1997                             -- Filter for orders placed in 1997 only
 GROUP BY 
-    [o].[CustomerID]
+   o.CustomerID,                                        -- Group results by customer
+   c.CompanyName                                        -- Include CompanyName in grouping to satisfy SQL rules
 ORDER BY 
-    SUM([od].[UnitPrice] * [od].[Quantity] * (1 - [od].[Discount])) DESC;
+   TotalRevenue DESC;                                   -- Sort by highest spending customers first

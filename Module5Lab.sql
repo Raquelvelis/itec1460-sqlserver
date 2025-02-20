@@ -1,7 +1,7 @@
 --INSERT OPERATION
 -- Create New Customer
 sqlq "INSERT INTO Customers (CustomerID, CompanyName, ContactName, Country) 
-VALUES ('STUD5', 'ALIBABA', 'Raquel Velis', 'USA');"
+VALUES ('STUD3', 'ALIBABA', 'Raquel Velis', 'USA');"
 
 --Verify the Insertion
 sqlq "SELECT CustomerID, CompanyName FROM Customers WHERE CustomerID = 'STUDE';"
@@ -15,13 +15,13 @@ sqlq "SELECT TOP 1 OrderID FROM Orders WHERE CustomerID = 'STUDE' ORDER BY Order
 
 --UPDATE OPERATION
 -- Change the Contact Name for our customer:
-sqlq "UPDATE Customers SET ContactName = 'Maria Perez' WHERE CustomerID = 'STUDE';"
+sqlq "UPDATE Customers SET ContactName = 'New Contact Name' WHERE CustomerID= 'STUDE';"
 
 --Verify if the name was updated: 
 sqlq "SELECT ContactName FROM Customers WHERE CustomerID = 'STUDE';"
 
 --Update Orders Details
-sqlq "UPDATE Orders SET ShipCountry = 'Venezuela' WHERE CustomerID = 'STUDE';"
+sqlq "UPDATE Orders SET ShipCountry = 'New Country' WHERE CustomerID = 'STUDE';"
 
 -- Verify if the country was updated 
 sqlq "SELECT ShipCountry FROM Orders WHERE CustomerID = 'STUDE';"

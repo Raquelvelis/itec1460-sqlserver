@@ -1,174 +1,159 @@
--- 1. SQL SELECT Statements: List all products with their CategoryName and SupplierName
+-- List all products with categoryName and SupplierName
 SELECT 
-    p.ProductName,
-    c.CategoryName,
-    s.CompanyName AS SupplierName
+    p.ProductName, c.CategoryName, s.CompanyName 
+    AS SupplierName
 FROM 
     Products p
-INNER JOIN 
+JOIN 
     Categories c ON p.CategoryID = c.CategoryID
-INNER JOIN 
-    Suppliers s ON p.SupplierID = s.SupplierID
-ORDER BY 
-    p.ProductName;
+JOIN 
+    Suppliers s 
+    ON p.SupplierID = s.SupplierID;
 
--- 2. SQL JOINs: Find all customers who have never placed an order
+-- SQL JOINs Find all customers who have never placed an order
 SELECT 
-    c.CustomerID,
-    c.CompanyName
+    c.CustomerID, c.CompanyName
 FROM 
     Customers c
 LEFT JOIN 
-    Orders o ON c.CustomerID = o.CustomerID
+    Orders o 
+    ON c.CustomerID = o.CustomerID
 WHERE 
-    o.OrderID IS NULL
-ORDER BY 
-    c.CompanyName;
+    o.OrderID IS NULL;
 
--- 3. Functions and GROUP BY: List top 5 employees by total sales amount
-SELECT 
-    e.EmployeeID,
-    e.FirstName,
-    e.LastName,
+-- GROUP BY List the Top 5 employees by total sales amount
+SELECT TOP 5
+     e.EmployeeID, e.FirstName, e.LastName, 
     SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)) AS TotalSales
 FROM 
     Employees e
-INNER JOIN 
-    Orders o ON e.EmployeeID = o.EmployeeID
-INNER JOIN 
-    [Order Details] od ON o.OrderID = od.OrderID
+JOIN 
+    Orders o 
+    ON e.EmployeeID = o.EmployeeID
+JOIN
+    [Order Details] od 
+    ON o.OrderID = od.OrderID
 GROUP BY 
     e.EmployeeID, e.FirstName, e.LastName
 ORDER BY 
-    TotalSales DESC
-OFFSET 0 ROWS
-FETCH NEXT 5 ROWS ONLY;
+    TotalSales 
+DESC;
 
--- 4. SQL Insert Statement: Add a new product
-INSERT INTO Products (
-    ProductName,
-    SupplierID,
-    CategoryID,
-    QuantityPerUnit,
-    UnitPrice,
-    UnitsInStock,
-    UnitsOnOrder,
-    ReorderLevel,
-    Discontinued
-) VALUES (
-    'Northwind Coffee',
-    1,
-    1,
-    '10 boxes x 20 bags',
-    18.00,
-    39,
-    0,
-    10,
-    0
-);
+-- Insert Statement: 
+INSERT INTO 
+    Products 
+    (ProductName, SupplierID, CategoryID, QuantityPerUnit, UnitPrice, 
+    UnitsInStock, UnitsOnOrder, ReorderLevel, Discontinued)
+VALUES 
+    ('Northwind Coffee', 1, 1, '10 boxes x 20 bags', 18.00, 
+    39, 0, 10, 0);
 
--- 5. SQL Update Statement: Increase UnitPrice of Beverages by 10%
-UPDATE Products
-SET UnitPrice = UnitPrice * 1.10
-WHERE CategoryID = (
-    SELECT CategoryID 
-    FROM Categories 
-    WHERE CategoryName = 'Beverages'
-);
+-- SQL Update Statement: Increase the UnitPrice of all products in the "Beverages" category by 10%.
+UPDATE
+     Products
+SET 
+    UnitPrice = UnitPrice * 1.10
+WHERE 
+    CategoryID = (SELECT CategoryID 
+    FROM Categories WHERE CategoryName = 'Beverages');
 
--- 6. SQL Insert and Delete Statements
--- a) Insert a new order for customer VINET
-DECLARE @NewOrderID int;
+-- SQL Insert and Delete Statements:
+-- First, insert into Orders table
+DECLARE 
+    @Today datetime;
+SET
+    @Today = GETDATE();
+INSERT INTO 
+    Orders (CustomerID, EmployeeID, OrderDate, RequiredDate)
+VALUES  
+    ('VINET', 1, @Today, DATEADD(day, 7, @Today));
 
--- Insert into Orders table
-INSERT INTO Orders (
-    CustomerID,
-    EmployeeID,
-    OrderDate,
-    RequiredDate,
-    ShipVia
-) VALUES (
-    'VINET',
-    1,
-    GETDATE(),
-    DATEADD(day, 7, GETDATE()),
-    1
-);
+-- Get the new OrderID to use in the delete statement
+DECLARE 
+    @NewOrderID int;
+SET 
+    @NewOrderID = SCOPE_IDENTITY();
 
--- Get the newly created OrderID
-SET @NewOrderID = SCOPE_IDENTITY();
+DELETE FROM --Delete the order just created
+    Orders
+WHERE 
+    OrderID = @NewOrderID;
 
--- b) Delete the order just created
-DELETE FROM Orders
-WHERE OrderID = @NewOrderID;
-
--- 7. Creating Tables: Create ProductReviews table
-CREATE TABLE ProductReviews (
-    ReviewID int PRIMARY KEY IDENTITY(1,1),
-    ProductID int NOT NULL,
-    CustomerID nchar(5) NOT NULL,
-    Rating int NOT NULL CHECK (Rating BETWEEN 1 AND 5),
+--Create a new table named "ProductReviews" with the following columns:
+--ReviewID (int, primary key)
+--ProductID (int, foreign key referencing Products table)
+--CustomerID (nchar(5), foreign key referencing Customers table)
+--Rating (int)
+--ReviewText (nvarchar(max))
+--ReviewDate (datetime)
+CREATE TABLE ProductReviews2 (
+    ReviewID int PRIMARY KEY,
+    ProductID int FOREIGN KEY REFERENCES Products(ProductID),
+    CustomerID nchar(5) FOREIGN KEY REFERENCES Customers(CustomerID),
+    Rating int,
     ReviewText nvarchar(max),
-    ReviewDate datetime DEFAULT GETDATE(),
-    CONSTRAINT FK_ProductReviews_Products FOREIGN KEY (ProductID)
-        REFERENCES Products (ProductID),
-    CONSTRAINT FK_ProductReviews_Customers FOREIGN KEY (CustomerID)
-        REFERENCES Customers (CustomerID)
+    ReviewDate datetime
 );
 
--- 8. Creating Views: Create vw_ProductSales view
-CREATE VIEW vw_ProductSales AS
+--Create a view named "vw_ProductSales" that shows ProductName, CategoryName, and TotalSales (sum of UnitPrice * Quantity) for each product
+
+CREATE VIEW 
+    w_ProductSales AS
 SELECT 
-    p.ProductName,
-    c.CategoryName,
-    SUM(od.UnitPrice * od.Quantity) AS TotalSales
-FROM 
+        p.ProductName, c.CategoryName, 
+        SUM(od.UnitPrice * od.Quantity) AS TotalSales
+FROM   
     Products p
-INNER JOIN 
-    Categories c ON p.CategoryID = c.CategoryID
-INNER JOIN 
-    [Order Details] od ON p.ProductID = od.ProductID
+JOIN 
+    Categories c 
+    ON p.CategoryID = c.CategoryID
+JOIN 
+    [Order Details] od 
+    ON p.ProductID = od.ProductID
 GROUP BY 
     p.ProductName, c.CategoryName;
 
--- 9. Stored Procedures: Create sp_TopCustomersByCountry
-CREATE PROCEDURE sp_TopCustomersByCountry
+-- Write a stored procedure named "sp_TopCustomersByCountry" that takes a country name as input and returns the top 3 customers by total order amount for that country.
+CREATE PROCEDURE 
+    sp_TopCustomersByCountry
     @CountryName nvarchar(15)
 AS
 BEGIN
-    SET NOCOUNT ON;
-    
-    SELECT TOP 3
-        c.CustomerID,
-        c.CompanyName,
-        SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)) AS TotalOrderAmount
+    SELECT TOP 3 
+            c.CustomerID, c.CompanyName, 
+            SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)) AS TotalAmount
     FROM 
         Customers c
-    INNER JOIN 
-        Orders o ON c.CustomerID = o.CustomerID
-    INNER JOIN 
-        [Order Details] od ON o.OrderID = od.OrderID
+    JOIN 
+        Orders o 
+        ON c.CustomerID = o.CustomerID
+    JOIN 
+        [Order Details] od 
+        ON o.OrderID = od.OrderID
     WHERE 
         c.Country = @CountryName
     GROUP BY 
         c.CustomerID, c.CompanyName
     ORDER BY 
-        TotalOrderAmount DESC;
+        TotalAmount 
+        DESC;
 END;
 
--- 10. Complex Query: Find employee who processed orders for the most unique products
-SELECT TOP 1
-    e.EmployeeID,
-    e.FirstName,
-    e.LastName,
-    COUNT(DISTINCT od.ProductID) AS UniqueProductsCount
+-- Write a query to find the employee who has processed orders for the most unique products. Display the EmployeeID, FirstName, LastName, and the count of unique products they've processed.
+
+SELECT TOP 1 
+    e.EmployeeID, e.FirstName, e.LastName, COUNT(DISTINCT od.ProductID) AS UniqueProductsCount
 FROM 
     Employees e
-INNER JOIN 
-    Orders o ON e.EmployeeID = o.EmployeeID
-INNER JOIN 
-    [Order Details] od ON o.OrderID = od.OrderID
+JOIN 
+    Orders o 
+    ON e.EmployeeID = o.EmployeeID
+JOIN 
+    [Order Details] od 
+    ON o.OrderID = od.OrderID
 GROUP BY 
     e.EmployeeID, e.FirstName, e.LastName
 ORDER BY 
-    UniqueProductsCount DESC;
+    UniqueProductsCount 
+    DESC;
+

@@ -122,4 +122,3 @@ WHERE ProductName = 'Chocolate Lava Cake';"
 -- Verify the product was removed
 sqlq "SELECT * FROM Products 
 WHERE ProductName = 'Chocolate Lava Cake';"
-

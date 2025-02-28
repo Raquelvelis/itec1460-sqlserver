@@ -94,9 +94,10 @@ CREATE TABLE ProductReviews2 (
     ReviewText nvarchar(max),
     ReviewDate datetime
 );
+DROP VIEW w_ProductSales
+
 
 --Create a view named "vw_ProductSales" that shows ProductName, CategoryName, and TotalSales (sum of UnitPrice * Quantity) for each product
-
 CREATE VIEW 
     w_ProductSales AS
 SELECT 

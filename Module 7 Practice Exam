@@ -99,7 +99,7 @@ DROP VIEW w_ProductSales
 
 --Create a view named "vw_ProductSales" that shows ProductName, CategoryName, and TotalSales (sum of UnitPrice * Quantity) for each product
 CREATE VIEW 
-    w_ProductSales AS
+     w_ProductSales AS
  SELECT 
         p.ProductName, c.CategoryName, 
         SUM(od.UnitPrice * od.Quantity) AS TotalSales

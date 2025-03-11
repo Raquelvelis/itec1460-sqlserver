@@ -6,9 +6,9 @@
 CREATE OR ALTER PROCEDURE CalculateOrderTotal
     @OrderID INT,
     @TotalAmount MONEY OUTPUT
-AS
-BEGIN
+AS BEGIN
     SET NOCOUNT ON;
+
     -- Calculate the total amount for the given order.
     SELECT @TotalAmount = SUM(UnitPrice * Quantity * (1 - Discount))
     FROM [Order Details]
@@ -28,7 +28,6 @@ BEGIN
     -- Output the total amount for the order
     PRINT 'The total amount for Order ' + CAST(@OrderID AS NVARCHAR(10)) + ' is $' + 
     CAST(@TotalAmount AS NVARCHAR(20));
-END
 -- Go causes the stored procedure to run after it's altered or created
 GO
 

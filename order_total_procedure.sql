@@ -2,6 +2,7 @@
 -- Specifying a parameter as OUTPUT means the procedure can modify
 -- the parameter's value.
 
+
 CREATE OR ALTER PROCEDURE CalculateOrderTotal
     @OrderID INT,
     @TotalAmount MONEY OUTPUT
@@ -46,3 +47,41 @@ EXEC CalculateOrderTotal
 
 PRINT 'Returned total amount: $' + CAST(ISNULL(@TotalAmount, 0) AS NVARCHAR(20));
 GO
+
+-- =============================================
+-- Part 2: CheckProductStock Procedure
+-- =============================================
+
+
+CREATE OR ALTER PROCEDURE CheckProductStock
+    @ProductID INT,
+    @NeedsReorder BIT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    -- Check if the product needs to be reordered
+    -- (when UnitsInStock is less than or equal to ReorderLevel)
+    SELECT @NeedsReorder = CASE
+                              WHEN UnitsInStock <= ReorderLevel THEN 1
+                              ELSE 0
+                           END
+    FROM Products
+    WHERE ProductID = @ProductID;
+    
+    -- Handle the case when the product ID doesn't exist
+    IF @@ROWCOUNT = 0
+    BEGIN
+        SET @NeedsReorder = 0;
+        RAISERROR('Product ID %d not found.', 11, 1, @ProductID);
+        RETURN;
+    END
+END
+GO
+
+-- Test the new procedure
+DECLARE @NeedsReorder BIT;
+EXEC CheckProductStock 
+    @ProductID = 11,
+    @NeedsReorder = @NeedsReorder OUTPUT;
+PRINT 'Needs Reorder: ' + CAST(@NeedsReorder AS VARCHAR(1));

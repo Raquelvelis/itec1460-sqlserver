@@ -1,0 +1,24 @@
+ProductID   ProductName                              UnitsInStock
+----------- ---------------------------------------- ------------
+          1 Chai                                                0
+
+(1 rows affected)
+
+(1 rows affected)
+ProductName                              UnitsInStock
+---------------------------------------- ------------
+Chai                                               25
+
+(1 rows affected)
+
+(1 rows affected)
+ProductName                              UnitsInStock
+---------------------------------------- ------------
+Chai                                                0
+
+(1 rows affected)
+ProductID   ProductName                              UnitsInStock
+----------- ---------------------------------------- ------------
+          1 Chai                                                0
+
+(1 rows affected)

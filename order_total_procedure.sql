@@ -102,4 +102,4 @@ EXEC CheckProductStock
     @NeedsReorder = @NeedsReorder OUTPUT;   -- Output parameter
 
 -- Step 3: Display the result (1 = needs reorder, 0 = doesn't need reorder)
-PRINT 'Needs Reorder: ' + CAST(@NeedsReorder AS VARCHAR(1));
+PRINT 'Needs Reorder:' + CAST(@NeedsReorder AS VARCHAR(1));

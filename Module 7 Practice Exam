@@ -99,27 +99,27 @@ DROP VIEW w_ProductSales
 
 --Create a view named "vw_ProductSales" that shows ProductName, CategoryName, and TotalSales (sum of UnitPrice * Quantity) for each product
 CREATE VIEW 
-    w_ProductSales AS
-SELECT 
+     w_ProductSales AS
+ SELECT 
         p.ProductName, c.CategoryName, 
         SUM(od.UnitPrice * od.Quantity) AS TotalSales
-FROM   
+ FROM   
     Products p
-JOIN 
+ JOIN 
     Categories c 
-    ON p.CategoryID = c.CategoryID
-JOIN 
+     ON p.CategoryID = c.CategoryID
+ JOIN 
     [Order Details] od 
-    ON p.ProductID = od.ProductID
-GROUP BY 
+     ON p.ProductID = od.ProductID
+ GROUP BY 
     p.ProductName, c.CategoryName;
 
 -- Write a stored procedure named "sp_TopCustomersByCountry" that takes a country name as input and returns the top 3 customers by total order amount for that country.
-CREATE PROCEDURE 
+ CREATE PROCEDURE 
     sp_TopCustomersByCountry
     @CountryName nvarchar(15)
-AS
-BEGIN
+ AS
+ BEGIN
     SELECT TOP 3 
             c.CustomerID, c.CompanyName, 
             SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)) AS TotalAmount
@@ -142,19 +142,19 @@ END;
 
 -- Write a query to find the employee who has processed orders for the most unique products. Display the EmployeeID, FirstName, LastName, and the count of unique products they've processed.
 
-SELECT TOP 1 
+ SELECT TOP 1 
     e.EmployeeID, e.FirstName, e.LastName, COUNT(DISTINCT od.ProductID) AS UniqueProductsCount
-FROM 
+ FROM 
     Employees e
-JOIN 
+ JOIN 
     Orders o 
-    ON e.EmployeeID = o.EmployeeID
-JOIN 
-    [Order Details] od 
-    ON o.OrderID = od.OrderID
-GROUP BY 
+     ON e.EmployeeID = o.EmployeeID
+ JOIN 
+     [Order Details] od 
+     ON o.OrderID = od.OrderID
+ GROUP BY 
     e.EmployeeID, e.FirstName, e.LastName
-ORDER BY 
-    UniqueProductsCount 
-    DESC;
+ ORDER BY 
+     UniqueProductsCount 
+     DESC;
 

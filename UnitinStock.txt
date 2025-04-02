@@ -1,5 +1,5 @@
-Order 123 not found.
+Order 12345 not found.
 Returned total amount: $0.00
 Order 99999 not found.
 Returned total amount: $0.00
-Needs Reorder: 1
+Needs Reorder:1
